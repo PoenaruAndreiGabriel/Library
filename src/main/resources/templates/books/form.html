@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title th:text="${pageTitle} + ' — Library'">Book Form — Library</title>
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+        crossorigin="anonymous"/>
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <style>
+    body { background-color: #f8f9fa; }
+    .navbar-brand { font-weight: 700; }
+    .sidebar { min-height: calc(100vh - 56px); background:#fff; border-right:1px solid #dee2e6; }
+    .sidebar .nav-link { color:#495057; border-radius:.375rem; }
+    .sidebar .nav-link:hover, .sidebar .nav-link.active { background:#e9ecef; color:#0d6efd; }
+    .card { border:none; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+    .required-star { color: #dc3545; }
+  </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/nav :: navbar}"></div>
+<div class="container-fluid">
+  <div class="row">
+    <div th:replace="~{fragments/nav :: sidebar}"></div>
+
+    <!-- Main -->
+    <main class="col-md-10 py-4 px-4">
+
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a th:href="@{/books}">Books</a></li>
+          <li class="breadcrumb-item active" th:text="${pageTitle}"></li>
+        </ol>
+      </nav>
+
+      <div class="row justify-content-center">
+        <div class="col-lg-7">
+          <div class="card">
+            <div class="card-header bg-white border-bottom py-3">
+              <h5 class="mb-0 fw-semibold">
+                <i class="bi bi-book me-2 text-primary"></i>
+                <span th:text="${pageTitle}"></span>
+              </h5>
+            </div>
+            <div class="card-body p-4">
+
+              <!-- Determine POST action based on whether editing -->
+              <form th:action="${bookForm.id != null} ? @{/books/{id}/edit(id=${bookForm.id})} : @{/books/new}"
+                    th:object="${bookForm}"
+                    method="post"
+                    id="bookForm"
+                    novalidate>
+
+                <!-- Title -->
+                <div class="mb-3">
+                  <label for="title" class="form-label fw-semibold">
+                    Title <span class="required-star">*</span>
+                  </label>
+                  <input type="text"
+                         id="title"
+                         th:field="*{title}"
+                         class="form-control"
+                         th:classappend="${#fields.hasErrors('title')} ? 'is-invalid' : ''"
+                         placeholder="e.g. The Great Gatsby"
+                         maxlength="255"
+                         required/>
+                  <div class="invalid-feedback" th:if="${#fields.hasErrors('title')}"
+                       th:errors="*{title}"></div>
+                  <div class="invalid-feedback" id="titleClientError"></div>
+                </div>
+
+                <!-- ISBN -->
+                <div class="mb-3">
+                  <label for="isbn" class="form-label fw-semibold">
+                    ISBN <span class="required-star">*</span>
+                  </label>
+                  <input type="text"
+                         id="isbn"
+                         th:field="*{isbn}"
+                         class="form-control font-monospace"
+                         th:classappend="${#fields.hasErrors('isbn')} ? 'is-invalid' : ''"
+                         placeholder="e.g. 978-3-16-148410-0"
+                         maxlength="17"
+                         pattern="[\d\-]{10,17}"
+                         required/>
+                  <div class="form-text">10–17 digits and hyphens only.</div>
+                  <div class="invalid-feedback" th:if="${#fields.hasErrors('isbn')}"
+                       th:errors="*{isbn}"></div>
+                  <div class="invalid-feedback" id="isbnClientError"></div>
+                </div>
+
+                <!-- Authors -->
+                <div class="mb-3">
+                  <label for="authorsInput" class="form-label fw-semibold">
+                    Authors <span class="required-star">*</span>
+                  </label>
+                  <input type="text"
+                         id="authorsInput"
+                         th:field="*{authorsInput}"
+                         class="form-control"
+                         th:classappend="${#fields.hasErrors('authorsInput')} ? 'is-invalid' : ''"
+                         placeholder="e.g. George Orwell, Aldous Huxley"
+                         required/>
+                  <div class="form-text">Separate multiple authors with a comma.</div>
+                  <div class="invalid-feedback" th:if="${#fields.hasErrors('authorsInput')}"
+                       th:errors="*{authorsInput}"></div>
+                </div>
+
+                <!-- Category -->
+                <div class="mb-3">
+                  <label for="categoryId" class="form-label fw-semibold">
+                    Category <span class="required-star">*</span>
+                  </label>
+                  <select id="categoryId"
+                          th:field="*{categoryId}"
+                          class="form-select"
+                          th:classappend="${#fields.hasErrors('categoryId')} ? 'is-invalid' : ''"
+                          required>
+                    <option value="">— Select a category —</option>
+                    <option th:each="cat : ${categories}"
+                            th:value="${cat.id}"
+                            th:text="${cat.name}"></option>
+                  </select>
+                  <div class="invalid-feedback" th:if="${#fields.hasErrors('categoryId')}"
+                       th:errors="*{categoryId}"></div>
+                </div>
+
+                <!-- Copies row -->
+                <div class="row g-3 mb-4">
+                  <div class="col-6">
+                    <label for="totalCopies" class="form-label fw-semibold">
+                      Total Copies <span class="required-star">*</span>
+                    </label>
+                    <input type="number"
+                           id="totalCopies"
+                           th:field="*{totalCopies}"
+                           class="form-control"
+                           th:classappend="${#fields.hasErrors('totalCopies')} ? 'is-invalid' : ''"
+                           min="1"
+                           required/>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('totalCopies')}"
+                         th:errors="*{totalCopies}"></div>
+                  </div>
+                  <div class="col-6">
+                    <label for="availableCopies" class="form-label fw-semibold">
+                      Available Copies <span class="required-star">*</span>
+                    </label>
+                    <input type="number"
+                           id="availableCopies"
+                           th:field="*{availableCopies}"
+                           class="form-control"
+                           th:classappend="${#fields.hasErrors('availableCopies')} ? 'is-invalid' : ''"
+                           min="0"
+                           required/>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('availableCopies')}"
+                         th:errors="*{availableCopies}"></div>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex gap-2">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-floppy me-1"></i>
+                    <span th:text="${bookForm.id != null} ? 'Save Changes' : 'Create Book'"></span>
+                  </button>
+                  <a th:href="@{/books}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg me-1"></i>Cancel
+                  </a>
+                </div>
+
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc4s9bIOgUxi8T/jzmFXFMrWQ8I5/s5tnFkFZQnXkKp"
+        crossorigin="anonymous"></script>
+<script>
+  // ── Client-side validation ──────────────────────────────────────────────
+  (function () {
+    'use strict';
+
+    const form = document.getElementById('bookForm');
+    const totalCopiesInput = document.getElementById('totalCopies');
+    const availableCopiesInput = document.getElementById('availableCopies');
+
+    // Cross-field: available <= total
+    function validateCopies() {
+      const total = parseInt(totalCopiesInput.value, 10);
+      const available = parseInt(availableCopiesInput.value, 10);
+      if (!isNaN(total) && !isNaN(available) && available > total) {
+        availableCopiesInput.setCustomValidity(
+          'Available copies cannot exceed total copies (' + total + ').'
+        );
+      } else {
+        availableCopiesInput.setCustomValidity('');
+      }
+    }
+
+    totalCopiesInput.addEventListener('input', validateCopies);
+    availableCopiesInput.addEventListener('input', validateCopies);
+
+    // Bootstrap validation styles on submit
+    form.addEventListener('submit', function (event) {
+      validateCopies();
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    });
+  })();
+</script>
+</body>
+</html>

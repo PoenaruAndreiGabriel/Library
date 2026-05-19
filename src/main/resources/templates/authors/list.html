@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Authors — Library</title>
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+        crossorigin="anonymous"/>
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <style>
+    body { background-color: #f8f9fa; }
+    .navbar-brand { font-weight: 700; }
+    .sidebar { min-height: calc(100vh - 56px); background: #fff; border-right: 1px solid #dee2e6; }
+    .sidebar .nav-link { color: #495057; border-radius: .375rem; }
+    .sidebar .nav-link:hover, .sidebar .nav-link.active { background: #e9ecef; color: #0d6efd; }
+    .card { border: none; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    .table thead th { background: #f1f3f5; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; }
+  </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/nav :: navbar}"></div>
+<div class="container-fluid">
+  <div class="row">
+    <div th:replace="~{fragments/nav :: sidebar}"></div>
+
+    <main class="col-md-10 py-4 px-4">
+
+      <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i><span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i><span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h4 class="mb-0 fw-semibold"><i class="bi bi-person me-2 text-primary"></i>Authors</h4>
+          <small class="text-muted" th:text="${authorsPage.totalElements} + ' author(s) found'"></small>
+        </div>
+        <a th:href="@{/authors/new}" class="btn btn-primary btn-sm">
+          <i class="bi bi-plus-lg me-1"></i>Add Author
+        </a>
+      </div>
+
+      <!-- Search -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <form th:action="@{/authors}" method="get" class="row g-2 align-items-end" novalidate>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Name</label>
+              <input type="text" name="name" class="form-control form-control-sm"
+                     placeholder="Search by name…" th:value="${searchName}" maxlength="200"/>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small fw-semibold">Sort by</label>
+              <select name="sort" class="form-select form-select-sm">
+                <option value="name" th:selected="${sort == 'name'}">Name</option>
+                <option value="id" th:selected="${sort == 'id'}">ID</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small fw-semibold">Direction</label>
+              <select name="dir" class="form-select form-select-sm">
+                <option value="asc" th:selected="${dir == 'asc'}">Ascending</option>
+                <option value="desc" th:selected="${dir == 'desc'}">Descending</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small fw-semibold">Page size</label>
+              <select name="pageSize" class="form-select form-select-sm">
+                <option value="5" th:selected="${pageSize == 5}">5</option>
+                <option value="10" th:selected="${pageSize == 10}">10</option>
+                <option value="20" th:selected="${pageSize == 20}">20</option>
+              </select>
+            </div>
+            <input type="hidden" name="page" value="0"/>
+            <div class="col-md-1 d-flex gap-2">
+              <button type="submit" class="btn btn-outline-primary btn-sm flex-fill">
+                <i class="bi bi-search me-1"></i>Apply
+              </button>
+              <a th:href="@{/authors}" class="btn btn-outline-secondary btn-sm flex-fill" th:if="${searching}">
+                <i class="bi bi-x-lg"></i>
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="card">
+        <div class="card-body p-0">
+          <div th:if="${authors.isEmpty()}" class="text-center py-5 text-muted">
+            <i class="bi bi-inbox display-4 d-block mb-2"></i>
+            <span th:text="${searching} ? 'No authors match your search.' : 'No authors yet. Add the first one!'"></span>
+          </div>
+
+          <div th:unless="${authors.isEmpty()}" class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Books</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="author, stat : ${authors}">
+                  <td class="text-muted small" th:text="${stat.index + 1}"></td>
+                  <td>
+                    <a th:href="@{/authors/{id}(id=${author.id})}"
+                       class="fw-semibold text-decoration-none" th:text="${author.name}"></a>
+                  </td>
+                  <td>
+                    <span th:if="${author.books == null or author.books.isEmpty()}" class="text-muted">—</span>
+                    <span th:unless="${author.books == null or author.books.isEmpty()}"
+                          class="badge rounded-pill text-bg-secondary"
+                          th:text="${author.books.size()}"></span>
+                  </td>
+                  <td class="text-end">
+                    <a th:href="@{/authors/{id}(id=${author.id})}"
+                       class="btn btn-sm btn-outline-secondary me-1" title="View">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                    <a th:href="@{/authors/{id}/edit(id=${author.id})}"
+                       class="btn btn-sm btn-outline-primary me-1" title="Edit">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <form th:action="@{/authors/{id}/delete(id=${author.id})}" method="post"
+                          style="display:inline"
+                          onsubmit="return confirm('Delete \'' + /*[[${author.name}]]*/ '' + '\'?')">
+                      <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <nav th:if="${!searching and totalPages > 1}" class="mt-4" aria-label="Author pages">
+        <ul class="pagination justify-content-center mb-0">
+          <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+            <a class="page-link" th:href="@{/authors(page=${currentPage - 1}, sort=${sort}, dir=${dir}, pageSize=${pageSize})}">Previous</a>
+          </li>
+          <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage} ? 'active'">
+            <a class="page-link" th:text="${i + 1}" th:href="@{/authors(page=${i}, sort=${sort}, dir=${dir}, pageSize=${pageSize})}"></a>
+          </li>
+          <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+            <a class="page-link" th:href="@{/authors(page=${currentPage + 1}, sort=${sort}, dir=${dir}, pageSize=${pageSize})}">Next</a>
+          </li>
+        </ul>
+      </nav>
+
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc4s9bIOgUxi8T/jzmFXFMrWQ8I5/s5tnFkFZQnXkKp"
+        crossorigin="anonymous"></script>
+</body>
+</html>
